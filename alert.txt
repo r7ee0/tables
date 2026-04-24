@@ -1,0 +1,13 @@
+ALTER TABLE education
+RENAME COLUMN year TO passing_year;
+
+ALTER TABLE social_media
+ADD CONSTRAINT fk_social_contact
+FOREIGN KEY (contact)
+REFERENCES personal_info(contact);
+
+ALTER TABLE document
+ADD contact NUMBER;
+
+ALTER TABLE personal_info
+MODIFY address VARCHAR2(50);

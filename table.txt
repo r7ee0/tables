@@ -1,0 +1,29 @@
+CREATE TABLE personal_info (
+  Firstname VARCHAR2(50),
+  Lastname VARCHAR2(50),
+  Phoneno NUMBER PRIMARY KEY,
+  Age NUMBER,
+  Address VARCHAR2(40)
+  );
+
+CREATE TABLE education (
+  StudentID NUMBER PRIMARY KEY,
+  Institution VARCHAR2(20),
+  Degree VARCHAR2(30),
+  Grade VARCHAR2(10),
+  Year DATE
+  );
+
+CREATE TABLE document (
+  Type VARCHAR2(50),
+  Issuedate DATE,
+  ID NUMBER PRIMARY KEY,
+  Expirydate NUMBER
+  );
+
+CREATE TABLE career (
+  Post VARCHAR2(20),
+  WorkID NUMBER PRIMARY KEY,
+  Experience VARCHAR2(20)
+  );
+

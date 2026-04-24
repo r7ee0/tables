@@ -1,0 +1,27 @@
+// inserting data into personal_info table
+INSERT INTO personal_info (first_name, last_name, age, contact, address)
+VALUES ('Reeju', 'Shrestha', 19, 9741803536, 'Kathmandu');
+
+INSERT INTO personal_info (first_name, last_name, age, contact, address)
+VALUES ('Ree', 'Shrestha', 19, 9741803536, 'Kathmandu');
+
+//inserting data into social_media table
+INSERT INTO social_media (username, contact, email, platform)
+VALUES ('ree_jj', 9741803536, 'reejus122@gmail.com', 'Instagram');
+
+INSERT INTO social_media (username, contact, email, platform)
+VALUES ('rkive.', 9800000000, 'rkive77@gmail.com', 'Instagram');
+
+//inserting data into documenttable
+INSERT INTO document (type, id, issuedate, expirydate)
+VALUES ('Citizenship', 101, DATE '2020-11-07', DATE '2039-01-01');
+
+INSERT INTO document (type, id, issuedate, expirydate)
+VALUES ('Citizenship', 102, DATE '2021-01-01', DATE '2030-01-01');
+
+// inserting data into education table
+INSERT INTO education (institution, passing_year, studentid, marks)
+VALUES ('Nami', DATE '2023-01-01', 20251072, 90);
+
+INSERT INTO education (institution, passing_year, studentid, marks)
+VALUES ('Tribhuvan University', DATE '2023-01-01', 5001, 70);
