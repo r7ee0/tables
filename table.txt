@@ -24,6 +24,5 @@ CREATE TABLE document (
 CREATE TABLE career (
   Post VARCHAR2(20),
   WorkID NUMBER PRIMARY KEY,
-  Experience VARCHAR2(20)
+  Experience VARCHAR2(20)0
   );
-
