@@ -1,0 +1,235 @@
+-- Create object type
+CREATE TYPE address_type AS OBJECT (
+    street VARCHAR2(50),
+    city VARCHAR2(30),
+    zip VARCHAR2(10)
+);
+/
+
+-- Create object table
+CREATE TABLE addresses OF address_type;
+
+-- Create relational table with REF column
+CREATE TABLE companies (
+    company_id NUMBER,
+    company_name VARCHAR2(50),
+    address_ref REF address_type
+);
+
+-- Get REF from object table
+SELECT REF(a) 
+FROM addresses a 
+WHERE a.city = 'New York';
+
+-- Insert REF into relational table
+INSERT INTO companies (company_id, company_name, address_ref)
+VALUES (1, 'Tech Corp', 
+    (SELECT REF(a) FROM addresses a WHERE a.city = 'New York'));
+
+-- Get full object
+SELECT DEREF(address_ref) FROM companies;
+
+-- Get specific attribute
+SELECT DEREF(address_ref).city FROM companies;
+
+-- With alias
+SELECT DEREF(a).street, DEREF(a).city
+FROM companies c, TABLE(c.address_ref) a;
+
+-- Single attribute
+SELECT address_ref.city FROM companies;
+
+-- Multiple attributes
+SELECT address_ref.street, address_ref.city, address_ref.zip
+FROM companies;
+
+-- In WHERE clause
+SELECT company_name
+FROM companies
+WHERE address_ref.city = 'New York';
+
+-- With JOIN condition
+SELECT c.company_name, address_ref.city
+FROM companies c
+WHERE address_ref.zip = '10001';
+
+--VArray
+-- Base object type
+CREATE TYPE phone_type AS OBJECT (
+    phone_no VARCHAR2(15),
+    phone_type VARCHAR2(10)
+);
+/
+
+-- Single dimensional VArray (max 3 phones)
+CREATE TYPE phone_varray_type AS VARRAY(3) OF phone_type;
+/
+
+-- Relational table with VArray column
+CREATE TABLE employees (
+    emp_id NUMBER,
+    emp_name VARCHAR2(50),
+    phones phone_varray_type
+);
+
+-- Insert with VArray constructor
+INSERT INTO employees VALUES (
+    101, 
+    'John Doe',
+    phone_varray_type(
+        phone_type('123-456-7890', 'Mobile'),
+        phone_type('987-654-3210', 'Home')
+    )
+);
+
+-- Get full VArray (not user-friendly)
+SELECT phones FROM employees WHERE emp_id = 101;
+
+-- Unnest VArray to get individual attributes (BEST)
+SELECT e.emp_id, e.emp_name, p.phone_no, p.phone_type
+FROM employees e, TABLE(e.phones) p
+WHERE e.emp_id = 101;
+
+-- With specific condition
+SELECT e.emp_name, p.phone_no
+FROM employees e, TABLE(e.phones) p
+WHERE p.phone_type = 'Mobile';
+
+-- Count phones per employee
+SELECT e.emp_name, COUNT(*) as phone_count
+FROM employees e, TABLE(e.phones) p
+GROUP BY e.emp_name;
+
+--Multi-Dimensional VArray
+-- Lower level: Department object
+CREATE TYPE dept_type AS OBJECT (
+    dept_id NUMBER,
+    dept_name VARCHAR2(30)
+);
+/
+
+-- Middle level: Location object with VArray of departments
+CREATE TYPE location_type AS OBJECT (
+    location_id NUMBER,
+    city VARCHAR2(30),
+    departments dept_varray_type  -- This will reference VArray
+);
+/
+
+-- VArray of departments (max 5 per location)
+CREATE TYPE dept_varray_type AS VARRAY(5) OF dept_type;
+/
+
+-- VArray of locations (max 3 per company) - MULTI-DIMENSIONAL
+CREATE TYPE location_varray_type AS VARRAY(3) OF location_type;
+/
+
+-- Main table
+CREATE TABLE companies_md (
+    company_id NUMBER,
+    company_name VARCHAR2(50),
+    locations location_varray_type  -- Multi-dimensional VArray
+);
+
+-- Insert with nested VArray constructors
+INSERT INTO companies_md VALUES (
+    1,
+    'Global Tech',
+    location_varray_type(
+        -- First location (New York)
+        location_type(
+            10, 'New York',
+            dept_varray_type(
+                dept_type(101, 'IT'),
+                dept_type(102, 'HR')
+            )
+        ),
+        -- Second location (London)
+        location_type(
+            20, 'London',
+            dept_varray_type(
+                dept_type(201, 'Sales'),
+                dept_type(202, 'Marketing')
+            )
+        )
+    )
+);
+
+--Query Multidimensional VArray
+-- Level 1: Unnest locations only
+SELECT c.company_id, c.company_name, l.location_id, l.city
+FROM companies_md c, TABLE(c.locations) l;
+
+-- Level 2: Unnest both dimensions (locations AND departments) - COMPLETE
+SELECT c.company_name, l.city, d.dept_id, d.dept_name
+FROM companies_md c, 
+     TABLE(c.locations) l,
+     TABLE(l.departments) d;
+
+-- Filter at deepest level
+SELECT c.company_name, l.city, d.dept_name
+FROM companies_md c, 
+     TABLE(c.locations) l,
+     TABLE(l.departments) d
+WHERE d.dept_name = 'IT';
+
+-- Get department count per city
+SELECT l.city, COUNT(*) as dept_count
+FROM companies_md c, 
+     TABLE(c.locations) l,
+     TABLE(l.departments) d
+GROUP BY l.city;
+
+--Nested Table
+-- Base object type
+CREATE TYPE project_type AS OBJECT (
+    project_id NUMBER,
+    project_name VARCHAR2(50),
+    budget NUMBER
+);
+/
+
+-- Nested table type (unlimited size)
+CREATE TYPE project_nt_type AS TABLE OF project_type;
+/
+
+-- Relational table with Nested Table column
+CREATE TABLE departments_nt (
+    dept_id NUMBER,
+    dept_name VARCHAR2(50),
+    projects project_nt_type
+)
+NESTED TABLE projects STORE AS projects_nt_tab;
+
+-- Insert with nested table constructor
+INSERT INTO departments_nt VALUES (
+    10,
+    'IT Department',
+    project_nt_type(
+        project_type(1001, 'Cloud Migration', 50000),
+        project_type(1002, 'Security Upgrade', 30000),
+        project_type(1003, 'Mobile App', 45000)
+    )
+);
+
+-- Unnest nested table (same as VArray)
+SELECT d.dept_id, d.dept_name, p.project_id, p.project_name, p.budget
+FROM departments_nt d, TABLE(d.projects) p;
+
+-- Filter specific project
+SELECT d.dept_name, p.project_name, p.budget
+FROM departments_nt d, TABLE(d.projects) p
+WHERE p.budget > 40000;
+
+-- Aggregation on nested table
+SELECT d.dept_name, SUM(p.budget) as total_budget
+FROM departments_nt d, TABLE(d.projects) p
+GROUP BY d.dept_name;
+
+-- Query nested table only (using THE and VALUE)
+SELECT VALUE(p)
+FROM THE(
+    SELECT projects 
+    FROM departments_nt 
+    WHERE dept_id = 10
+) p;

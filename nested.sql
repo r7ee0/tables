@@ -9,4 +9,4 @@ FROM lecturers
 WHERE Lecturer_id NOT IN (
     SELECT Lecturer_id
     FROM course_lecturers
-);
+);w
